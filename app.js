@@ -84,41 +84,47 @@ function displayResults(tracks) {
     });
 }
 
-// Fonction pour envoyer la suggestion vers Google Sheets
+// Le site étant maintenant hébergé par le bot lui-même, on peut utiliser un chemin relatif direct !
+const BACKEND_URL = '/api/suggest';
+
+// Fonction pour envoyer la suggestion vers notre serveur Backend
 async function suggestTrack(btnElement, trackName, artistName, albumName) {
     // Désactiver le bouton pendant l'envoi
     const originalText = btnElement.innerHTML;
-    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Envoi...';
+    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Traitement...';
     btnElement.disabled = true;
 
     try {
-        // Préparer les paramètres pour l'URL
-        const params = new URLSearchParams({
-            trackName: trackName,
-            artistName: artistName,
-            albumName: albumName
+        const response = await fetch(BACKEND_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                trackName: trackName,
+                artistName: artistName,
+                albumName: albumName
+            })
         });
 
-        // Si l'URL n'est pas configurée, on simule l'envoi
-        if (GOOGLE_SCRIPT_URL === 'VOTRE_URL_GOOGLE_APPS_SCRIPT_ICI') {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            console.warn("⚠️ URL Google Apps Script non configurée. Envoi simulé !");
-        } else {
-            // Envoi réel vers Google Sheets
-            await fetch(`${GOOGLE_SCRIPT_URL}?${params.toString()}`, {
-                method: 'GET',
-                mode: 'no-cors' // Évite les problèmes de CORS avec Google Apps Script
-            });
-        }
+        const result = await response.json();
 
-        // Succès
-        btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Envoyé';
-        btnElement.style.background = 'var(--success)';
-        showToast();
+        if (response.ok && result.success) {
+            // Succès
+            btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Ajouté !';
+            btnElement.style.background = 'var(--success)';
+            showToast();
+        } else {
+            // Refusé (Filtre anti-troll ou erreur Spotify)
+            btnElement.innerHTML = '<i class="fa-solid fa-ban"></i> Refusé';
+            btnElement.style.background = 'var(--danger)';
+            console.error("Refusé:", result.message);
+            alert(`Impossible d'ajouter la musique: ${result.message}`);
+        }
 
     } catch (error) {
         console.error('Erreur lors de l\'envoi:', error);
-        btnElement.innerHTML = '<i class="fa-solid fa-xmark"></i> Erreur';
+        btnElement.innerHTML = '<i class="fa-solid fa-xmark"></i> Erreur serveur';
         btnElement.style.background = 'var(--danger)';
         setTimeout(() => {
             btnElement.innerHTML = originalText;

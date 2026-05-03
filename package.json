@@ -1,0 +1,10 @@
+{
+  "name": "suggestify-vercel",
+  "version": "1.0.0",
+  "description": "Serveur API pour Suggestify avec intégration Spotify sur Vercel",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "spotify-web-api-node": "^5.0.2",
+    "dotenv": "^16.3.1"
+  }
+}
