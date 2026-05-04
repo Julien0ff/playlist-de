@@ -87,7 +87,7 @@ function displayResults(tracks) {
 // On utilise maintenant notre nouveau serveur Render invincible face à Spotify !
 const BACKEND_URL = 'https://playlist-de.onrender.com/api/suggest';
 
-// Fonction pour envoyer la suggestion vers notre serveur Backend
+// Fonction pour envoyer la suggestion vers Google Sheets
 async function suggestTrack(btnElement, trackName, artistName, albumName) {
     // Désactiver le bouton pendant l'envoi
     const originalText = btnElement.innerHTML;
@@ -95,36 +95,27 @@ async function suggestTrack(btnElement, trackName, artistName, albumName) {
     btnElement.disabled = true;
 
     try {
-        const response = await fetch(BACKEND_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                trackName: trackName,
-                artistName: artistName,
-                albumName: albumName
-            })
-        });
-
+        // Envoi en GET vers Google Apps Script
+        const url = `${GOOGLE_SCRIPT_URL}?trackName=${encodeURIComponent(trackName)}&artistName=${encodeURIComponent(artistName)}&albumName=${encodeURIComponent(albumName)}`;
+        const response = await fetch(url);
         const result = await response.json();
 
-        if (response.ok && result.success) {
+        if (response.ok && result.result === "success") {
             // Succès
             btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Ajouté !';
             btnElement.style.background = 'var(--success)';
             showToast();
         } else {
-            // Refusé (Filtre anti-troll ou erreur Spotify)
-            btnElement.innerHTML = '<i class="fa-solid fa-ban"></i> Refusé';
+            // Refusé ou erreur
+            btnElement.innerHTML = '<i class="fa-solid fa-ban"></i> Erreur';
             btnElement.style.background = 'var(--danger)';
-            console.error("Refusé:", result.message);
-            alert(`Impossible d'ajouter la musique: ${result.message}`);
+            console.error("Erreur:", result);
+            alert(`Impossible d'ajouter la musique.`);
         }
 
     } catch (error) {
         console.error('Erreur lors de l\'envoi:', error);
-        btnElement.innerHTML = '<i class="fa-solid fa-xmark"></i> Erreur serveur';
+        btnElement.innerHTML = '<i class="fa-solid fa-xmark"></i> Erreur réseau';
         btnElement.style.background = 'var(--danger)';
         setTimeout(() => {
             btnElement.innerHTML = originalText;
