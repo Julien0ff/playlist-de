@@ -37,14 +37,20 @@ module.exports = async (req, res) => {
     }
 
     // 2. Recherche sur Spotify
-    const trackUri = await searchTrack(trackName, artistName);
-    if (!trackUri) {
+    const searchResult = await searchTrack(trackName, artistName);
+    
+    if (searchResult.error) {
+        console.error(`❌ Erreur API Spotify:`, searchResult.error);
+        return res.status(500).json({ success: false, message: `Erreur API Spotify: ${searchResult.error}` });
+    }
+
+    if (!searchResult.uri) {
         console.log(`❌ Musique introuvable sur Spotify.`);
         return res.status(404).json({ success: false, message: "Musique introuvable sur Spotify." });
     }
 
     // 3. Ajout à la playlist Spotify
-    const added = await addTrackToPlaylist(trackUri);
+    const added = await addTrackToPlaylist(searchResult.uri);
     if (added) {
         return res.status(200).json({ success: true, message: "Musique ajoutée à la playlist !" });
     } else {

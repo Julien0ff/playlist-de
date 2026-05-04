@@ -23,22 +23,26 @@ async function searchTrack(trackName, artistName) {
     try {
         await refreshAccessToken();
         
-        const query = `track:${trackName} artist:${artistName}`;
+        // Clean names to improve search matches
+        const cleanTrackName = trackName.split('(')[0].split('-')[0].trim();
+        const cleanArtistName = artistName.split(',')[0].split('&')[0].trim();
+        
+        const query = `track:${cleanTrackName} artist:${cleanArtistName}`;
         const data = await spotifyApi.searchTracks(query, { limit: 1 });
         
-        if (data.body.tracks.items.length > 0) {
-            return data.body.tracks.items[0].uri;
+        if (data.body.tracks && data.body.tracks.items.length > 0) {
+            return { uri: data.body.tracks.items[0].uri, error: null };
         }
         
-        const fallbackData = await spotifyApi.searchTracks(trackName, { limit: 1 });
-        if (fallbackData.body.tracks.items.length > 0) {
-            return fallbackData.body.tracks.items[0].uri;
+        const fallbackData = await spotifyApi.searchTracks(cleanTrackName, { limit: 1 });
+        if (fallbackData.body.tracks && fallbackData.body.tracks.items.length > 0) {
+            return { uri: fallbackData.body.tracks.items[0].uri, error: null };
         }
         
-        return null;
+        return { uri: null, error: null };
     } catch (error) {
         console.error("Erreur lors de la recherche Spotify:", error);
-        return null;
+        return { uri: null, error: error.message || "Erreur de l'API Spotify" };
     }
 }
 
