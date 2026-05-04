@@ -3,45 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suggestify - Suggérez vos musiques</title>
+    <title>Suggestify — Proposez vos musiques</title>
+    <meta name="description" content="Recherchez et proposez des morceaux pour notre playlist collaborative Spotify.">
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="bg-animation">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
+    <!-- Ambient background -->
+    <div class="ambient-bg">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
     </div>
 
-    <main class="container">
-        <header>
-            <h1>Suggestify</h1>
-            <p>Recherchez et proposez des morceaux pour notre playlist collaborative.</p>
+    <main class="app-shell">
+        <!-- Header -->
+        <header class="app-header" id="appHeader">
+            <div class="header-content">
+                <div class="brand">
+                    <div class="brand-icon">
+                        <i class="fa-solid fa-music"></i>
+                    </div>
+                    <h1>Suggestify</h1>
+                </div>
+                <p class="tagline">Propose un son pour la playlist.</p>
+            </div>
         </header>
 
-        <section class="search-section">
-            <div class="search-box">
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" id="searchInput" placeholder="Rechercher un titre, un artiste..." autocomplete="off">
-                <div class="loader" id="searchLoader"></div>
+        <!-- Search -->
+        <section class="search-wrapper" id="searchSection">
+            <div class="search-bar" id="searchBar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Artiste, titre, album…"
+                    autocomplete="off"
+                    spellcheck="false"
+                >
+                <div class="search-spinner" id="searchLoader"></div>
+                <button class="search-clear" id="clearBtn" aria-label="Effacer la recherche">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
         </section>
 
-        <section class="results-section" id="resultsContainer">
-            <!-- Results will be injected here via JS -->
+        <!-- Rate limit banner (hidden by default) -->
+        <div class="rate-limit-banner" id="rateLimitBanner">
+            <i class="fa-solid fa-clock"></i>
+            <span id="rateLimitMsg">Tu as atteint la limite. Réessaie dans quelques minutes.</span>
+        </div>
+
+        <!-- Results -->
+        <section class="results-list" id="resultsContainer">
             <div class="empty-state" id="emptyState">
-                <i class="fa-solid fa-music"></i>
-                <p>Vos résultats de recherche s'afficheront ici</p>
+                <div class="empty-icon-wrap">
+                    <i class="fa-solid fa-headphones"></i>
+                </div>
+                <p>Recherche un titre pour commencer</p>
             </div>
         </section>
     </main>
 
-    <!-- Toast Notification -->
+    <!-- Toast -->
     <div class="toast" id="toast">
-        <i class="fa-solid fa-circle-check"></i>
-        <span>Musique suggérée avec succès !</span>
+        <div class="toast-icon">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <span>Ajouté à la playlist !</span>
     </div>
 
     <script src="app.js"></script>

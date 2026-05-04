@@ -1,16 +1,26 @@
-const searchInput = document.getElementById('searchInput');
-const searchLoader = document.getElementById('searchLoader');
-const resultsContainer = document.getElementById('resultsContainer');
-const toast = document.getElementById('toast');
+// ══════════════════════════════════════════════════════
+// Suggestify — App Logic (Apple Music Edition)
+// ══════════════════════════════════════════════════════
 
-// Remplacez cette URL par l'URL de votre Google Apps Script Web App une fois déployée
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-QIswEWuQP7mqk0ZawZWxyzKClWuB3Wdolky3YoQsJaxTdW3LB80gg7czI3fJQ2XGlg/exec';
+const searchInput   = document.getElementById('searchInput');
+const searchLoader  = document.getElementById('searchLoader');
+const clearBtn      = document.getElementById('clearBtn');
+const resultsContainer = document.getElementById('resultsContainer');
+const toast         = document.getElementById('toast');
+const rateLimitBanner  = document.getElementById('rateLimitBanner');
+const rateLimitMsg     = document.getElementById('rateLimitMsg');
+
+// ── Backend Render (rate-limit + Spotify) ────────────
+const BACKEND_URL = 'https://playlist-de.onrender.com/api/suggest';
 
 let debounceTimeout = null;
 
-// Écouteur d'événement pour la barre de recherche
+// ── Search Input ─────────────────────────────────────
 searchInput.addEventListener('input', (e) => {
     const query = e.target.value.trim();
+
+    // Toggle clear button
+    clearBtn.classList.toggle('visible', query.length > 0);
 
     clearTimeout(debounceTimeout);
 
@@ -19,27 +29,32 @@ searchInput.addEventListener('input', (e) => {
         return;
     }
 
-    // Debounce de 500ms
-    debounceTimeout = setTimeout(() => {
-        searchMusic(query);
-    }, 500);
+    debounceTimeout = setTimeout(() => searchMusic(query), 400);
 });
 
-// Rechercher de la musique via l'API iTunes (Sans authentification requise)
+clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    clearBtn.classList.remove('visible');
+    showEmptyState();
+    searchInput.focus();
+});
+
+// ── iTunes Search (no auth needed) ───────────────────
 async function searchMusic(query) {
     showLoader();
     try {
         const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=10`;
         const response = await fetch(url);
         const data = await response.json();
-
         displayResults(data.results);
     } catch (error) {
         console.error('Erreur lors de la recherche:', error);
         resultsContainer.innerHTML = `
             <div class="empty-state">
-                <i class="fa-solid fa-triangle-exclamation" style="color: var(--danger)"></i>
-                <p>Une erreur est survenue lors de la recherche.</p>
+                <div class="empty-icon-wrap">
+                    <i class="fa-solid fa-triangle-exclamation" style="color: var(--danger)"></i>
+                </div>
+                <p>Erreur lors de la recherche. Vérifie ta connexion.</p>
             </div>
         `;
     } finally {
@@ -47,12 +62,15 @@ async function searchMusic(query) {
     }
 }
 
+// ── Render Results ───────────────────────────────────
 function displayResults(tracks) {
-    if (tracks.length === 0) {
+    if (!tracks || tracks.length === 0) {
         resultsContainer.innerHTML = `
             <div class="empty-state">
-                <i class="fa-regular fa-face-frown"></i>
-                <p>Aucun résultat trouvé pour cette recherche.</p>
+                <div class="empty-icon-wrap">
+                    <i class="fa-regular fa-face-frown"></i>
+                </div>
+                <p>Aucun résultat trouvé.</p>
             </div>
         `;
         return;
@@ -61,100 +79,134 @@ function displayResults(tracks) {
     resultsContainer.innerHTML = '';
 
     tracks.forEach((track, index) => {
-        // Obtenir une image de meilleure qualité
         const coverUrl = track.artworkUrl100.replace('100x100bb', '300x300bb');
 
-        const card = document.createElement('div');
-        card.className = 'track-card';
-        card.style.animationDelay = `${index * 0.1}s`;
-        card.style.animation = 'fadeInUp 0.5s ease-out backwards';
+        const row = document.createElement('div');
+        row.className = 'track-row';
+        row.style.animation = `rowAppear 0.35s cubic-bezier(0.22,1,0.36,1) ${index * 0.06}s backwards`;
 
-        card.innerHTML = `
-            <img src="${coverUrl}" alt="${track.collectionName}" class="track-cover">
-            <div class="track-info">
-                <div class="track-title" title="${track.trackName}">${track.trackName}</div>
-                <div class="track-artist" title="${track.artistName}">${track.artistName} • ${track.collectionName}</div>
+        row.innerHTML = `
+            <img src="${coverUrl}" alt="${escapeAttr(track.collectionName)}" class="track-artwork" loading="lazy">
+            <div class="track-meta">
+                <span class="track-name">${escapeHtml(track.trackName)}</span>
+                <span class="track-artist">${escapeHtml(track.artistName)} — ${escapeHtml(track.collectionName)}</span>
             </div>
-            <button class="suggest-btn" onclick="suggestTrack(this, '${escapeHtml(track.trackName)}', '${escapeHtml(track.artistName)}', '${escapeHtml(track.collectionName)}')">
-                <i class="fa-solid fa-paper-plane"></i> Suggérer
+            <button class="add-btn" onclick="suggestTrack(this, '${escapeAttr(track.trackName)}', '${escapeAttr(track.artistName)}', '${escapeAttr(track.collectionName)}')">
+                <i class="fa-solid fa-plus"></i> Ajouter
             </button>
         `;
 
-        resultsContainer.appendChild(card);
+        resultsContainer.appendChild(row);
     });
 }
 
-// On utilise maintenant notre nouveau serveur Render invincible face à Spotify !
-const BACKEND_URL = 'https://playlist-de.onrender.com/api/suggest';
-
-// Fonction pour envoyer la suggestion vers Google Sheets
+// ── Suggest Track → POST to Render backend ───────────
 async function suggestTrack(btnElement, trackName, artistName, albumName) {
-    // Désactiver le bouton pendant l'envoi
-    const originalText = btnElement.innerHTML;
-    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Traitement...';
+    // Hide any previous rate-limit banner
+    rateLimitBanner.classList.remove('visible');
+
+    const originalHTML = btnElement.innerHTML;
+    btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    btnElement.classList.add('loading');
     btnElement.disabled = true;
 
     try {
-        // Envoi en GET vers Google Apps Script
-        const url = `${GOOGLE_SCRIPT_URL}?trackName=${encodeURIComponent(trackName)}&artistName=${encodeURIComponent(artistName)}&albumName=${encodeURIComponent(albumName)}`;
-        const response = await fetch(url);
+        const response = await fetch(BACKEND_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ trackName, artistName, albumName })
+        });
+
         const result = await response.json();
 
-        if (response.ok && result.result === "success") {
-            // Succès
-            btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Ajouté !';
-            btnElement.style.background = 'var(--success)';
+        if (response.ok && result.success) {
+            // ✅ Success
+            btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Ajouté';
+            btnElement.classList.remove('loading');
+            btnElement.classList.add('success');
             showToast();
+
+        } else if (response.status === 429) {
+            // ⏳ Rate limited
+            btnElement.innerHTML = '<i class="fa-solid fa-clock"></i> Limite';
+            btnElement.classList.remove('loading');
+            btnElement.classList.add('error');
+
+            rateLimitMsg.textContent = result.message || `Limite atteinte. Réessaie dans ${result.remainingMin || '?'} min.`;
+            rateLimitBanner.classList.add('visible');
+
+            // Re-enable after a moment
+            setTimeout(() => {
+                btnElement.innerHTML = originalHTML;
+                btnElement.classList.remove('error');
+                btnElement.disabled = false;
+            }, 5000);
+
         } else {
-            // Refusé ou erreur
-            btnElement.innerHTML = '<i class="fa-solid fa-ban"></i> Erreur';
-            btnElement.style.background = 'var(--danger)';
-            console.error("Erreur:", result);
-            alert(`Impossible d'ajouter la musique.`);
+            // ❌ Other error
+            btnElement.innerHTML = '<i class="fa-solid fa-xmark"></i> Erreur';
+            btnElement.classList.remove('loading');
+            btnElement.classList.add('error');
+            console.error('Erreur:', result);
+
+            setTimeout(() => {
+                btnElement.innerHTML = originalHTML;
+                btnElement.classList.remove('error');
+                btnElement.disabled = false;
+            }, 3000);
         }
 
     } catch (error) {
-        console.error('Erreur lors de l\'envoi:', error);
-        btnElement.innerHTML = '<i class="fa-solid fa-xmark"></i> Erreur réseau';
-        btnElement.style.background = 'var(--danger)';
+        console.error('Erreur réseau:', error);
+        btnElement.innerHTML = '<i class="fa-solid fa-wifi"></i> Hors ligne';
+        btnElement.classList.remove('loading');
+        btnElement.classList.add('error');
+
         setTimeout(() => {
-            btnElement.innerHTML = originalText;
+            btnElement.innerHTML = originalHTML;
+            btnElement.classList.remove('error');
             btnElement.disabled = false;
-            btnElement.style.background = '';
         }, 3000);
     }
 }
 
-// Utilitaires
+// ── Utilities ────────────────────────────────────────
 function showEmptyState() {
     resultsContainer.innerHTML = `
         <div class="empty-state" id="emptyState">
-            <i class="fa-solid fa-music"></i>
-            <p>Vos résultats de recherche s'afficheront ici</p>
+            <div class="empty-icon-wrap">
+                <i class="fa-solid fa-headphones"></i>
+            </div>
+            <p>Recherche un titre pour commencer</p>
         </div>
     `;
 }
 
-function showLoader() {
-    searchLoader.classList.add('active');
-}
-
-function hideLoader() {
-    searchLoader.classList.remove('active');
-}
+function showLoader()  { searchLoader.classList.add('active'); }
+function hideLoader()  { searchLoader.classList.remove('active'); }
 
 function showToast() {
     toast.classList.add('show');
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
+    setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-function escapeHtml(unsafe) {
-    return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function escapeAttr(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .replace(/\\/g, '\\\\');
 }

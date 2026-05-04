@@ -7,6 +7,57 @@ const { searchTrack, addTrackToPlaylist } = require('./spotify');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ═══════════════════════════════════════════════════
+// 🛡️  Rate Limiter par IP — 2 musiques / 15 minutes
+// ═══════════════════════════════════════════════════
+const RATE_LIMIT_MAX = 2;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes en ms
+const ipRequestLog = new Map(); // Map<string, number[]>  ip -> [timestamp, ...]
+
+function getRealIp(req) {
+    // Render/Vercel/proxies envoient l'IP réelle dans x-forwarded-for
+    const forwarded = req.headers['x-forwarded-for'];
+    if (forwarded) {
+        return forwarded.split(',')[0].trim();
+    }
+    return req.connection?.remoteAddress || req.socket?.remoteAddress || 'unknown';
+}
+
+function checkRateLimit(ip) {
+    const now = Date.now();
+    const timestamps = ipRequestLog.get(ip) || [];
+
+    // Garder uniquement les timestamps dans la fenêtre actuelle
+    const recentTimestamps = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW_MS);
+    ipRequestLog.set(ip, recentTimestamps);
+
+    if (recentTimestamps.length >= RATE_LIMIT_MAX) {
+        // Calculer le temps restant avant la prochaine place libre
+        const oldestInWindow = recentTimestamps[0];
+        const remainingMs = RATE_LIMIT_WINDOW_MS - (now - oldestInWindow);
+        const remainingMin = Math.ceil(remainingMs / 60000);
+        return { allowed: false, remainingMin };
+    }
+
+    // Enregistrer cette requête
+    recentTimestamps.push(now);
+    ipRequestLog.set(ip, recentTimestamps);
+    return { allowed: true, remainingMin: 0 };
+}
+
+// Nettoyage automatique toutes les 5 minutes pour éviter les fuites mémoire
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, timestamps] of ipRequestLog.entries()) {
+        const fresh = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW_MS);
+        if (fresh.length === 0) {
+            ipRequestLog.delete(ip);
+        } else {
+            ipRequestLog.set(ip, fresh);
+        }
+    }
+}, 5 * 60 * 1000);
+
 // Middleware
 // Configuration CORS pour autoriser le frontend (même hébergé sur une autre URL)
 app.use(cors());
@@ -24,7 +75,19 @@ app.post('/api/suggest', async (req, res) => {
         return res.status(400).json({ success: false, message: "Informations manquantes." });
     }
 
-    console.log(`📥 Nouvelle suggestion reçue : ${trackName} - ${artistName}`);
+    // 0. Rate Limit par IP
+    const ip = getRealIp(req);
+    const rateCheck = checkRateLimit(ip);
+    if (!rateCheck.allowed) {
+        console.log(`⏳ Rate limit atteint pour ${ip} — encore ${rateCheck.remainingMin} min`);
+        return res.status(429).json({
+            success: false,
+            message: `Tu as déjà suggéré 2 musiques. Réessaie dans ${rateCheck.remainingMin} min.`,
+            remainingMin: rateCheck.remainingMin
+        });
+    }
+
+    console.log(`📥 Nouvelle suggestion reçue de ${ip} : ${trackName} - ${artistName}`);
 
     // 1. Filtrage Trolls / Insultes
     const validation = validateSuggestion(trackName, artistName);
