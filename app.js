@@ -138,7 +138,7 @@ clearBtn.addEventListener('click', () => {
 async function searchMusic(query) {
     showLoader();
     try {
-        const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=10`;
+        const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=25`;
         const response = await fetch(url);
         const data = await response.json();
         displayResults(data.results);
