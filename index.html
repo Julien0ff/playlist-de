@@ -1,20 +1,35 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Suggestify — Proposez vos musiques</title>
     <meta name="description" content="Recherchez et proposez des morceaux pour notre playlist collaborative Spotify.">
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body>
     <!-- Ambient background -->
     <div class="ambient-bg">
         <div class="ambient-orb orb-1"></div>
         <div class="ambient-orb orb-2"></div>
     </div>
+
+    <!-- Top Bar -->
+    <nav class="top-bar">
+        <div class="top-bar-left">
+            <i class="fa-solid fa-plane-departure"></i>
+            <span>Voyage Allemagne 2026</span>
+        </div>
+        <div class="top-bar-right" id="quotaStatus">
+            <!-- Filled by JS -->
+        </div>
+    </nav>
 
     <main class="app-shell">
         <!-- Header -->
@@ -24,7 +39,7 @@
                     <img src="assets/Apple_Music_icon.png" alt="Suggestify" class="brand-icon">
                     <h1>Suggestify</h1>
                 </div>
-                <p class="tagline">Propose un son pour la playlist.</p>
+                <p class="tagline">Propose un son pour la playlist collaborative.</p>
             </div>
         </header>
 
@@ -32,13 +47,8 @@
         <section class="search-wrapper" id="searchSection">
             <div class="search-bar" id="searchBar">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input
-                    type="text"
-                    id="searchInput"
-                    placeholder="Artiste, titre, album…"
-                    autocomplete="off"
-                    spellcheck="false"
-                >
+                <input type="text" id="searchInput" placeholder="Artiste, titre, album…" autocomplete="off"
+                    spellcheck="false">
                 <div class="search-spinner" id="searchLoader"></div>
                 <button class="search-clear" id="clearBtn" aria-label="Effacer la recherche">
                     <i class="fa-solid fa-xmark"></i>
@@ -63,6 +73,11 @@
         </section>
     </main>
 
+    <!-- Footer -->
+    <footer class="app-footer">
+        <span>Site fait avec <i class="fa-solid fa-heart footer-heart"></i> par Nahël</span>
+    </footer>
+
     <!-- Toast -->
     <div class="toast" id="toast">
         <div class="toast-icon">
@@ -73,4 +88,5 @@
 
     <script src="app.js"></script>
 </body>
+
 </html>

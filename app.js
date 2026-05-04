@@ -9,6 +9,7 @@ const resultsContainer = document.getElementById('resultsContainer');
 const toast         = document.getElementById('toast');
 const rateLimitBanner  = document.getElementById('rateLimitBanner');
 const rateLimitMsg     = document.getElementById('rateLimitMsg');
+const quotaStatus      = document.getElementById('quotaStatus');
 
 // ── Google Apps Script (suggestion → Google Sheet) ───
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-QIswEWuQP7mqk0ZawZWxyzKClWuB3Wdolky3YoQsJaxTdW3LB80gg7czI3fJQ2XGlg/exec';
@@ -45,6 +46,52 @@ function recordSuggestion() {
     timestamps.push(Date.now());
     localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(timestamps));
 }
+
+// ── Quota Status Badge ───────────────────────────────
+let quotaInterval = null;
+
+function updateQuotaStatus() {
+    const used = getRateLimitTimestamps().length;
+    const remaining = Math.max(0, RATE_LIMIT_MAX - used);
+
+    if (remaining === 2) {
+        quotaStatus.innerHTML = `<div class="quota-badge ok"><i class="fa-solid fa-music"></i> ${remaining}/2 dispo</div>`;
+        stopQuotaTimer();
+    } else if (remaining === 1) {
+        quotaStatus.innerHTML = `<div class="quota-badge warn"><i class="fa-solid fa-music"></i> ${remaining}/2 dispo</div>`;
+        stopQuotaTimer();
+    } else {
+        // Cooldown — show remaining time
+        const rateCheck = checkRateLimit();
+        quotaStatus.innerHTML = `<div class="quota-badge limit"><i class="fa-solid fa-clock"></i> ${rateCheck.remainingMin} min</div>`;
+        startQuotaTimer();
+    }
+}
+
+function startQuotaTimer() {
+    if (quotaInterval) return;
+    quotaInterval = setInterval(() => {
+        const used = getRateLimitTimestamps().length;
+        const remaining = RATE_LIMIT_MAX - used;
+        if (remaining > 0) {
+            // Cooldown finished
+            rateLimitBanner.classList.remove('visible');
+            updateQuotaStatus();
+        } else {
+            updateQuotaStatus();
+        }
+    }, 10000); // refresh every 10s
+}
+
+function stopQuotaTimer() {
+    if (quotaInterval) {
+        clearInterval(quotaInterval);
+        quotaInterval = null;
+    }
+}
+
+// Init quota on page load
+updateQuotaStatus();
 
 let debounceTimeout = null;
 
@@ -169,6 +216,7 @@ async function suggestTrack(btnElement, trackName, artistName, albumName) {
         if (response.ok && result.result === 'success') {
             // ✅ Success — enregistrer dans le rate limiter
             recordSuggestion();
+            updateQuotaStatus();
             btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Ajouté';
             btnElement.classList.remove('loading');
             btnElement.classList.add('success');

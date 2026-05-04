@@ -99,6 +99,71 @@ body {
     100% { transform: translate(20px, -20px) scale(0.95); }
 }
 
+/* ── Top Bar ──────────────────────────────────────── */
+.top-bar {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 14px 20px 0;
+    gap: 12px;
+}
+
+.top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.top-bar-left i {
+    font-size: 12px;
+    color: var(--accent);
+}
+
+.top-bar-right {
+    display: flex;
+    align-items: center;
+}
+
+/* Quota badge */
+.quota-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--fill-search);
+    border-radius: 980px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+}
+
+.quota-badge i {
+    font-size: 11px;
+}
+
+.quota-badge.ok {
+    color: var(--success);
+    background: var(--success-soft);
+}
+
+.quota-badge.warn {
+    color: var(--warning);
+    background: var(--warning-soft);
+}
+
+.quota-badge.limit {
+    color: var(--danger);
+    background: rgba(255, 69, 58, 0.15);
+}
+
 /* ── App Shell ────────────────────────────────────── */
 .app-shell {
     position: relative;
@@ -108,8 +173,33 @@ body {
     padding: 0 20px;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    min-height: 100dvh;
+    flex: 1;
+}
+
+/* ── Footer ───────────────────────────────────────── */
+.app-footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 32px 20px 28px;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.2px;
+}
+
+.footer-heart {
+    color: var(--accent);
+    font-size: 11px;
+    animation: heartbeat 1.8s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    15% { transform: scale(1.25); }
+    30% { transform: scale(1); }
+    45% { transform: scale(1.15); }
+    60% { transform: scale(1); }
 }
 
 /* ── Header ───────────────────────────────────────── */
