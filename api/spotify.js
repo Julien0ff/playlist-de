@@ -42,17 +42,9 @@ async function searchTrack(trackName, artistName) {
         return { uri: null, error: null };
     } catch (error) {
         console.error("Erreur lors de la recherche Spotify:", error);
-        let errorMsg = "Erreur inconnue de l'API Spotify";
-        if (error && error.body && error.body.error && error.body.error.message) {
-            errorMsg = error.body.error.message;
-        } else if (error && error.message) {
-            errorMsg = typeof error.message === 'string' ? error.message : JSON.stringify(error.message);
-        } else if (error && typeof error === 'object') {
-            errorMsg = JSON.stringify(error);
-        } else {
-            errorMsg = String(error);
-        }
-        return { uri: null, error: errorMsg };
+        const util = require('util');
+        const rawError = util.inspect(error, { depth: 3 });
+        return { uri: null, error: rawError };
     }
 }
 
