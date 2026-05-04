@@ -14,7 +14,7 @@ async function refreshAccessToken() {
         spotifyApi.setAccessToken(data.body['access_token']);
         console.log("Token Spotify rafraîchi avec succès");
     } catch (error) {
-        console.error("Erreur lors du rafraîchissement du token Spotify:", error.message);
+        console.error("Erreur lors du rafraîchissement du token Spotify:", error);
         throw error;
     }
 }
@@ -42,7 +42,17 @@ async function searchTrack(trackName, artistName) {
         return { uri: null, error: null };
     } catch (error) {
         console.error("Erreur lors de la recherche Spotify:", error);
-        return { uri: null, error: error.message || "Erreur de l'API Spotify" };
+        let errorMsg = "Erreur inconnue de l'API Spotify";
+        if (error && error.body && error.body.error && error.body.error.message) {
+            errorMsg = error.body.error.message;
+        } else if (error && error.message) {
+            errorMsg = typeof error.message === 'string' ? error.message : JSON.stringify(error.message);
+        } else if (error && typeof error === 'object') {
+            errorMsg = JSON.stringify(error);
+        } else {
+            errorMsg = String(error);
+        }
+        return { uri: null, error: errorMsg };
     }
 }
 
