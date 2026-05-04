@@ -10,8 +10,41 @@ const toast         = document.getElementById('toast');
 const rateLimitBanner  = document.getElementById('rateLimitBanner');
 const rateLimitMsg     = document.getElementById('rateLimitMsg');
 
-// ── Backend Render (rate-limit + Spotify) ────────────
-const BACKEND_URL = 'https://playlist-de.onrender.com/api/suggest';
+// ── Google Apps Script (suggestion → Google Sheet) ───
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-QIswEWuQP7mqk0ZawZWxyzKClWuB3Wdolky3YoQsJaxTdW3LB80gg7czI3fJQ2XGlg/exec';
+
+// ── Rate Limit côté client (2 musiques / 15 min) ─────
+const RATE_LIMIT_MAX = 2;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const RATE_LIMIT_KEY = 'suggestify_timestamps';
+
+function getRateLimitTimestamps() {
+    try {
+        const raw = localStorage.getItem(RATE_LIMIT_KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        const now = Date.now();
+        // Ne garder que les timestamps récents (< 15 min)
+        return arr.filter(t => now - t < RATE_LIMIT_WINDOW_MS);
+    } catch { return []; }
+}
+
+function checkRateLimit() {
+    const timestamps = getRateLimitTimestamps();
+    if (timestamps.length >= RATE_LIMIT_MAX) {
+        const oldest = timestamps[0];
+        const remainingMs = RATE_LIMIT_WINDOW_MS - (Date.now() - oldest);
+        const remainingMin = Math.ceil(remainingMs / 60000);
+        return { allowed: false, remainingMin };
+    }
+    return { allowed: true, remainingMin: 0 };
+}
+
+function recordSuggestion() {
+    const timestamps = getRateLimitTimestamps();
+    timestamps.push(Date.now());
+    localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(timestamps));
+}
 
 let debounceTimeout = null;
 
@@ -100,10 +133,28 @@ function displayResults(tracks) {
     });
 }
 
-// ── Suggest Track → POST to Render backend ───────────
+// ── Suggest Track → GET to Google Apps Script ────────
 async function suggestTrack(btnElement, trackName, artistName, albumName) {
     // Hide any previous rate-limit banner
     rateLimitBanner.classList.remove('visible');
+
+    // Vérifier le rate limit côté client
+    const rateCheck = checkRateLimit();
+    if (!rateCheck.allowed) {
+        rateLimitMsg.textContent = `Tu as déjà suggéré 2 musiques. Réessaie dans ${rateCheck.remainingMin} min.`;
+        rateLimitBanner.classList.add('visible');
+
+        btnElement.innerHTML = '<i class="fa-solid fa-clock"></i> Limite';
+        btnElement.classList.add('error');
+        btnElement.disabled = true;
+
+        setTimeout(() => {
+            btnElement.innerHTML = '<i class="fa-solid fa-plus"></i> Ajouter';
+            btnElement.classList.remove('error');
+            btnElement.disabled = false;
+        }, 5000);
+        return;
+    }
 
     const originalHTML = btnElement.innerHTML;
     btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
@@ -111,36 +162,17 @@ async function suggestTrack(btnElement, trackName, artistName, albumName) {
     btnElement.disabled = true;
 
     try {
-        const response = await fetch(BACKEND_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ trackName, artistName, albumName })
-        });
-
+        const url = `${GOOGLE_SCRIPT_URL}?trackName=${encodeURIComponent(trackName)}&artistName=${encodeURIComponent(artistName)}&albumName=${encodeURIComponent(albumName)}`;
+        const response = await fetch(url);
         const result = await response.json();
 
-        if (response.ok && result.success) {
-            // ✅ Success
+        if (response.ok && result.result === 'success') {
+            // ✅ Success — enregistrer dans le rate limiter
+            recordSuggestion();
             btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Ajouté';
             btnElement.classList.remove('loading');
             btnElement.classList.add('success');
             showToast();
-
-        } else if (response.status === 429) {
-            // ⏳ Rate limited
-            btnElement.innerHTML = '<i class="fa-solid fa-clock"></i> Limite';
-            btnElement.classList.remove('loading');
-            btnElement.classList.add('error');
-
-            rateLimitMsg.textContent = result.message || `Limite atteinte. Réessaie dans ${result.remainingMin || '?'} min.`;
-            rateLimitBanner.classList.add('visible');
-
-            // Re-enable after a moment
-            setTimeout(() => {
-                btnElement.innerHTML = originalHTML;
-                btnElement.classList.remove('error');
-                btnElement.disabled = false;
-            }, 5000);
 
         } else {
             // ❌ Other error
