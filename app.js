@@ -49,21 +49,23 @@ function recordSuggestion() {
 
 // ── Quota Status Badge ───────────────────────────────
 let quotaInterval = null;
+const TOOLTIP_TEXT = 'Tu peux suggérer <strong>2 musiques</strong> toutes les <strong>15 minutes</strong> pour garder la playlist variée.';
 
 function updateQuotaStatus() {
     const used = getRateLimitTimestamps().length;
     const remaining = Math.max(0, RATE_LIMIT_MAX - used);
+    const tooltip = `<div class="quota-tooltip" id="quotaTooltip">${TOOLTIP_TEXT}</div>`;
 
     if (remaining === 2) {
-        quotaStatus.innerHTML = `<div class="quota-badge ok"><i class="fa-solid fa-music"></i> ${remaining}/2 dispo</div>`;
+        quotaStatus.innerHTML = `<div class="quota-badge ok"><i class="fa-solid fa-music"></i> ${remaining}/2 dispo</div>${tooltip}`;
         stopQuotaTimer();
     } else if (remaining === 1) {
-        quotaStatus.innerHTML = `<div class="quota-badge warn"><i class="fa-solid fa-music"></i> ${remaining}/2 dispo</div>`;
+        quotaStatus.innerHTML = `<div class="quota-badge warn"><i class="fa-solid fa-music"></i> ${remaining}/2 dispo</div>${tooltip}`;
         stopQuotaTimer();
     } else {
         // Cooldown — show remaining time
         const rateCheck = checkRateLimit();
-        quotaStatus.innerHTML = `<div class="quota-badge limit"><i class="fa-solid fa-clock"></i> ${rateCheck.remainingMin} min</div>`;
+        quotaStatus.innerHTML = `<div class="quota-badge limit"><i class="fa-solid fa-clock"></i> ${rateCheck.remainingMin} min</div>${tooltip}`;
         startQuotaTimer();
     }
 }
@@ -92,6 +94,19 @@ function stopQuotaTimer() {
 
 // Init quota on page load
 updateQuotaStatus();
+
+// Mobile: tap the badge to toggle tooltip
+quotaStatus.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const tip = document.getElementById('quotaTooltip');
+    if (tip) tip.classList.toggle('show');
+});
+
+// Close tooltip when tapping elsewhere
+document.addEventListener('click', () => {
+    const tip = document.getElementById('quotaTooltip');
+    if (tip) tip.classList.remove('show');
+});
 
 let debounceTimeout = null;
 
