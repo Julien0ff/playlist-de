@@ -136,13 +136,9 @@ body {
     width: 64px;
     height: 64px;
     border-radius: 16px;
-    background: linear-gradient(135deg, var(--accent), #FF6482);
-    display: grid;
-    place-items: center;
-    font-size: 28px;
-    color: white;
-    box-shadow: 0 6px 28px var(--accent-glow);
+    object-fit: cover;
     flex-shrink: 0;
+    box-shadow: 0 6px 28px var(--accent-glow);
 }
 
 .brand h1 {
@@ -162,23 +158,8 @@ body {
 
 /* ── Search ───────────────────────────────────────── */
 .search-wrapper {
-    padding: 0 0 8px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    padding: 8px 0 16px;
     animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.15s backwards;
-}
-
-.search-wrapper::before {
-    content: '';
-    position: absolute;
-    top: -56px;
-    left: -20px;
-    right: -20px;
-    bottom: 0;
-    background: linear-gradient(to bottom, var(--bg) 40%, transparent);
-    z-index: -1;
-    pointer-events: none;
 }
 
 .search-bar {
@@ -515,16 +496,21 @@ body {
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 500px) {
     .app-header {
-        padding: 40px 0 20px;
+        padding: 32px 0 20px;
+    }
+
+    .brand-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
     }
 
     .brand h1 {
-        font-size: 1.6rem;
+        font-size: 1.8rem;
     }
 
     .tagline {
-        padding-left: 60px;
-        font-size: 0.95rem;
+        font-size: 0.92rem;
     }
 
     .track-artwork {
@@ -553,8 +539,13 @@ body {
 }
 
 @media (max-width: 380px) {
-    .tagline {
-        padding-left: 0;
-        margin-top: 4px;
+    .brand-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+    }
+
+    .brand h1 {
+        font-size: 1.5rem;
     }
 }
