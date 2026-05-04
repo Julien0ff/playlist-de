@@ -70,26 +70,26 @@ body {
 .ambient-orb {
     position: absolute;
     border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.18;
+    filter: blur(100px);
+    opacity: 0.35;
     animation: drift 25s ease-in-out infinite alternate;
 }
 
 .orb-1 {
-    width: 500px;
-    height: 500px;
+    width: 550px;
+    height: 550px;
     background: var(--accent);
-    top: -15%;
-    right: -10%;
+    top: -12%;
+    right: -15%;
     animation-delay: 0s;
 }
 
 .orb-2 {
-    width: 400px;
-    height: 400px;
+    width: 450px;
+    height: 450px;
     background: #AF52DE;
-    bottom: -10%;
-    left: -8%;
+    bottom: -8%;
+    left: -12%;
     animation-delay: -8s;
 }
 
@@ -114,37 +114,39 @@ body {
 
 /* ── Header ───────────────────────────────────────── */
 .app-header {
-    padding: 56px 0 28px;
+    padding: 48px 0 32px;
     animation: fadeDown 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .header-content {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
 }
 
 .brand {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
 }
 
 .brand-icon {
-    width: 46px;
-    height: 46px;
-    border-radius: 12px;
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
     background: linear-gradient(135deg, var(--accent), #FF6482);
     display: grid;
     place-items: center;
-    font-size: 20px;
+    font-size: 28px;
     color: white;
-    box-shadow: 0 4px 20px var(--accent-glow);
+    box-shadow: 0 6px 28px var(--accent-glow);
     flex-shrink: 0;
 }
 
 .brand h1 {
-    font-size: 2rem;
+    font-size: 2.6rem;
     font-weight: 800;
     letter-spacing: -0.5px;
     color: var(--text-primary);
@@ -153,9 +155,9 @@ body {
 
 .tagline {
     color: var(--text-secondary);
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 400;
-    padding-left: 60px;
+    opacity: 0.8;
 }
 
 /* ── Search ───────────────────────────────────────── */
