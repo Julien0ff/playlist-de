@@ -84,8 +84,8 @@ function displayResults(tracks) {
     });
 }
 
-// Le site étant maintenant hébergé par le bot lui-même, on peut utiliser un chemin relatif direct !
-const BACKEND_URL = '/api/suggest';
+// On utilise maintenant notre nouveau serveur Render invincible face à Spotify !
+const BACKEND_URL = 'https://playlist-de.onrender.com/api/suggest';
 
 // Fonction pour envoyer la suggestion vers notre serveur Backend
 async function suggestTrack(btnElement, trackName, artistName, albumName) {
