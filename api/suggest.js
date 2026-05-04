@@ -40,8 +40,10 @@ module.exports = async (req, res) => {
     const searchResult = await searchTrack(trackName, artistName);
     
     if (searchResult.error) {
-        console.error(`❌ Erreur API Spotify:`, searchResult.error);
-        return res.status(500).json({ success: false, message: `Erreur API Spotify: ${searchResult.error}` });
+        let safeError = typeof searchResult.error === 'string' ? searchResult.error : JSON.stringify(searchResult.error);
+        if (safeError === '{}') safeError = 'Vérifiez les identifiants Spotify (Token invalide ou manquant)';
+        console.error(`❌ Erreur API Spotify:`, safeError);
+        return res.status(500).json({ success: false, message: `Erreur API Spotify: ${safeError} (Version 3)` });
     }
 
     if (!searchResult.uri) {
