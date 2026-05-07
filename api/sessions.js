@@ -25,13 +25,13 @@ module.exports = async (req, res) => {
             return res.json({ success: true, sessions: sessionsWithStatus });
 
         case 'POST':
-            const { title, dateStart, dateEnd } = req.body;
+            const { title, dateStart, timeStart, dateEnd, timeEnd, isPrivate, password } = req.body;
             if (!title || !dateStart || !dateEnd) return res.status(400).json({ success: false, message: 'Données manquantes.' });
             
             const slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
             if (await db.getSessionBySlug(slug)) return res.status(409).json({ success: false, message: 'Slug déjà existant.' });
             
-            const session = await db.createSession({ title, slug, dateStart, dateEnd });
+            const session = await db.createSession({ title, slug, dateStart, timeStart, dateEnd, timeEnd, isPrivate, password });
             return res.json({ success: true, session: { ...session, status: db.getSessionStatus(session) } });
 
         case 'PUT':

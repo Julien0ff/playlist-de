@@ -43,13 +43,36 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET') {
         const status = db.getSessionStatus(session);
-        return res.json({
-            success: true,
-            session: { id: session.id, title: session.title, slug: session.slug, dateStart: session.dateStart, dateEnd: session.dateEnd, status }
-        });
+        const sessionData = { 
+            id: session.id, 
+            title: session.title, 
+            slug: session.slug, 
+            dateStart: session.dateStart, 
+            dateEnd: session.dateEnd,
+            timeStart: session.timeStart,
+            timeEnd: session.timeEnd,
+            status 
+        };
+        
+        if (session.isPrivate) {
+            return res.json({ success: true, requireAuth: true, session: sessionData });
+        }
+        return res.json({ success: true, session: sessionData });
     }
 
     if (req.method === 'POST') {
+        const { action, password } = req.body;
+
+        if (action === 'verifyPassword') {
+            if (!session.isPrivate) return res.json({ success: true });
+            if (session.password === password) return res.json({ success: true });
+            return res.status(401).json({ success: false, message: 'Mot de passe incorrect.' });
+        }
+
+        if (session.isPrivate && session.password !== req.body.password) {
+            return res.status(401).json({ success: false, message: 'Non autorisé.' });
+        }
+
         const status = db.getSessionStatus(session);
         if (status !== 'active') return res.status(403).json({ success: false, message: "Session inactive." });
 

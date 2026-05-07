@@ -79,12 +79,26 @@
                 <input type="text" id="modalSessionTitle" placeholder="Ex: Voyage Allemagne 2027">
             </div>
             <div class="modal-field">
-                <label for="modalDateStart">Date de début</label>
-                <input type="date" id="modalDateStart">
+                <label>Début</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="date" id="modalDateStart" style="flex:1">
+                    <input type="time" id="modalTimeStart" style="flex:1">
+                </div>
             </div>
             <div class="modal-field">
-                <label for="modalDateEnd">Date de fin</label>
-                <input type="date" id="modalDateEnd">
+                <label>Fin</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="date" id="modalDateEnd" style="flex:1">
+                    <input type="time" id="modalTimeEnd" style="flex:1">
+                </div>
+            </div>
+            <div class="modal-field" style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" id="modalIsPrivate" style="width:auto; margin:0; cursor:pointer;">
+                <label for="modalIsPrivate" style="margin:0; cursor:pointer;">Session privée</label>
+            </div>
+            <div class="modal-field" id="modalPasswordFieldContainer" style="display:none;">
+                <label for="modalPassword">Mot de passe</label>
+                <input type="text" id="modalPassword" placeholder="Ex: secret123">
             </div>
             <div class="modal-actions">
                 <button class="modal-cancel" id="modalCancel">Annuler</button>

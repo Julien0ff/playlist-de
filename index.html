@@ -42,6 +42,22 @@
             <div class="session-status-dates" id="sessionStatusDates"></div>
         </div>
 
+        <!-- Session Auth Screen (shown when session requires password) -->
+        <div class="session-status-screen" id="sessionAuthScreen" style="display: none;">
+            <div class="session-status-icon" style="background: rgba(255,255,255,0.1); color: var(--text-primary); box-shadow: none;">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h2 class="session-status-title">Session privée</h2>
+            <p class="session-status-msg">Cette session est protégée par un mot de passe.</p>
+            <form id="sessionAuthForm" autocomplete="off" style="margin-top:20px; width:100%; max-width:300px; display:flex; flex-direction:column; gap:12px;">
+                <input type="password" id="sessionPasswordInput" placeholder="Mot de passe" style="padding:14px; border-radius:12px; border:none; background:var(--fill-search); color:var(--text-primary); font-size:16px; outline:none;" autofocus>
+                <button type="submit" id="sessionAuthBtn" style="padding:14px; border-radius:12px; border:none; background:var(--accent); color:white; font-weight:600; font-size:16px; cursor:pointer; transition: opacity 0.2s;">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Accéder
+                </button>
+            </form>
+            <div id="sessionAuthError" style="color:var(--danger); margin-top:10px; display:none; font-size:14px; font-weight:500;">Mot de passe incorrect.</div>
+        </div>
+
         <!-- Active Session Content -->
         <div id="activeSessionContent">
             <!-- Header -->

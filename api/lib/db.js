@@ -25,7 +25,7 @@ async function getSessionById(id) {
     return sessions.find(s => s.id === id) || null;
 }
 
-async function createSession({ title, slug, dateStart, dateEnd }) {
+async function createSession({ title, slug, dateStart, timeStart, dateEnd, timeEnd, isPrivate, password }) {
     const sessions = await getSessions();
     const id = Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
     const session = {
@@ -33,7 +33,11 @@ async function createSession({ title, slug, dateStart, dateEnd }) {
         title,
         slug,
         dateStart,
+        timeStart: timeStart || '00:00',
         dateEnd,
+        timeEnd: timeEnd || '23:59',
+        isPrivate: !!isPrivate,
+        password: isPrivate ? password : null,
         createdAt: new Date().toISOString()
     };
     sessions.push(session);
@@ -131,8 +135,8 @@ async function setRateLimit(key, value, expireMs) {
 
 function getSessionStatus(session) {
     const now = new Date();
-    const start = new Date(session.dateStart + 'T00:00:00');
-    const end = new Date(session.dateEnd + 'T23:59:59');
+    const start = new Date(`${session.dateStart}T${session.timeStart || '00:00'}:00`);
+    const end = new Date(`${session.dateEnd}T${session.timeEnd || '23:59'}:59`);
 
     if (now < start) return 'upcoming';
     if (now > end) return 'ended';

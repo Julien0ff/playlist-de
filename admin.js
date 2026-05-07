@@ -135,15 +135,19 @@ function renderSessions() {
 
     sessionsGrid.innerHTML = sorted.map(s => {
         const statusLabel = { active: 'Active', upcoming: 'À venir', ended: 'Terminée' }[s.status] || s.status;
-        const formatD = d => new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+        const formatDT = (d, t) => {
+            const date = new Date(`${d}T${t || '00:00'}:00`);
+            return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + (t || '');
+        };
         const sessionUrl = `${window.location.origin}/session/${s.slug}`;
+        const privateIcon = s.isPrivate ? '<i class="fa-solid fa-lock" style="margin-right:5px; color:var(--text-tertiary);" title="Privée"></i>' : '';
 
         return `
         <div class="session-card" data-id="${s.id}">
             <div class="session-status-dot ${s.status}"></div>
             <div class="session-info">
-                <div class="session-title">${esc(s.title)}</div>
-                <div class="session-dates">${formatD(s.dateStart)} → ${formatD(s.dateEnd)}</div>
+                <div class="session-title">${privateIcon}${esc(s.title)}</div>
+                <div class="session-dates">${formatDT(s.dateStart, s.timeStart)} → ${formatDT(s.dateEnd, s.timeEnd)}</div>
             </div>
             <span class="session-badge ${s.status}">${statusLabel}</span>
             <span class="session-count"><i class="fa-solid fa-music"></i> ${s.suggestionCount || 0}</span>
@@ -164,8 +168,17 @@ document.getElementById('newSessionBtn').addEventListener('click', () => {
     modalConfirm.textContent = 'Créer';
     document.getElementById('modalSessionTitle').value = '';
     document.getElementById('modalDateStart').value = '';
+    document.getElementById('modalTimeStart').value = '00:00';
     document.getElementById('modalDateEnd').value = '';
+    document.getElementById('modalTimeEnd').value = '23:59';
+    document.getElementById('modalIsPrivate').checked = false;
+    document.getElementById('modalPassword').value = '';
+    document.getElementById('modalPasswordFieldContainer').style.display = 'none';
     modalOverlay.classList.add('active');
+});
+
+document.getElementById('modalIsPrivate').addEventListener('change', (e) => {
+    document.getElementById('modalPasswordFieldContainer').style.display = e.target.checked ? 'block' : 'none';
 });
 
 document.getElementById('modalCancel').addEventListener('click', closeModal);
@@ -181,28 +194,43 @@ function openEditSession(id) {
     modalConfirm.textContent = 'Enregistrer';
     document.getElementById('modalSessionTitle').value = s.title;
     document.getElementById('modalDateStart').value = s.dateStart;
+    document.getElementById('modalTimeStart').value = s.timeStart || '00:00';
     document.getElementById('modalDateEnd').value = s.dateEnd;
+    document.getElementById('modalTimeEnd').value = s.timeEnd || '23:59';
+    document.getElementById('modalIsPrivate').checked = s.isPrivate || false;
+    document.getElementById('modalPassword').value = s.password || '';
+    document.getElementById('modalPasswordFieldContainer').style.display = s.isPrivate ? 'block' : 'none';
     modalOverlay.classList.add('active');
 }
 
 modalConfirm.addEventListener('click', async () => {
     const title = document.getElementById('modalSessionTitle').value.trim();
     const dateStart = document.getElementById('modalDateStart').value;
+    const timeStart = document.getElementById('modalTimeStart').value;
     const dateEnd = document.getElementById('modalDateEnd').value;
+    const timeEnd = document.getElementById('modalTimeEnd').value;
+    const isPrivate = document.getElementById('modalIsPrivate').checked;
+    const password = document.getElementById('modalPassword').value.trim();
 
     if (!title || !dateStart || !dateEnd) return;
+    if (isPrivate && !password) {
+        alert('Le mot de passe est obligatoire pour une session privée.');
+        return;
+    }
+
+    const payload = { title, dateStart, timeStart, dateEnd, timeEnd, isPrivate, password };
 
     try {
         if (editingSessionId) {
             await fetch(`${API}/api/sessions?id=${editingSessionId}`, {
                 method: 'PUT', headers: authHeaders(),
-                body: JSON.stringify({ title, dateStart, dateEnd })
+                body: JSON.stringify(payload)
             });
             toast('Session modifiée !');
         } else {
             const res = await fetch(`${API}/api/sessions`, {
                 method: 'POST', headers: authHeaders(),
-                body: JSON.stringify({ title, dateStart, dateEnd })
+                body: JSON.stringify(payload)
             });
             const data = await res.json();
             if (!data.success) { alert(data.message); return; }

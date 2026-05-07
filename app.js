@@ -18,6 +18,13 @@ const quotaStatus = document.getElementById('quotaStatus');
 const sessionLabel = document.getElementById('sessionLabel');
 const sessionStatusScreen = document.getElementById('sessionStatusScreen');
 const activeSessionContent = document.getElementById('activeSessionContent');
+const sessionAuthScreen = document.getElementById('sessionAuthScreen');
+const sessionAuthForm = document.getElementById('sessionAuthForm');
+const sessionPasswordInput = document.getElementById('sessionPasswordInput');
+const sessionAuthError = document.getElementById('sessionAuthError');
+const sessionAuthBtn = document.getElementById('sessionAuthBtn');
+
+let currentSession = null;
 
 // ── API Base URL ─────────────────────────────────────
 const API_BASE = window.location.origin;
@@ -127,41 +134,96 @@ async function loadSession() {
         }
 
         const session = data.session;
+        currentSession = session;
         document.title = `Suggestify — ${session.title}`;
         sessionLabel.textContent = session.title;
 
-        if (session.status === 'active') {
-            // Show the suggestion form
-            sessionStatusScreen.style.display = 'none';
-            activeSessionContent.style.display = 'block';
-            updateQuotaStatus();
-        } else if (session.status === 'upcoming') {
-            showSessionStatus(
-                'upcoming',
-                session.title,
-                `La session "${session.title}" n'a pas encore commencé.`,
-                session.dateStart,
-                session.dateEnd
-            );
-        } else {
-            showSessionStatus(
-                'ended',
-                session.title,
-                `La session "${session.title}" est terminée.`,
-                session.dateStart,
-                session.dateEnd
-            );
+        if (data.requireAuth) {
+            const savedPwd = sessionStorage.getItem(`suggestify_pwd_${SESSION_SLUG}`);
+            if (savedPwd) {
+                const ok = await verifyPassword(savedPwd);
+                if (ok) {
+                    processSessionStatus(session);
+                    return;
+                }
+            }
+            showAuthScreen();
+            return;
         }
+
+        processSessionStatus(session);
     } catch (err) {
         console.error('Erreur chargement session:', err);
         showSessionError('Erreur', 'Impossible de charger la session. Vérifie ta connexion.');
     }
 }
 
-function showSessionStatus(type, title, message, dateStart, dateEnd) {
+function processSessionStatus(session) {
+    if (sessionAuthScreen) sessionAuthScreen.style.display = 'none';
+    if (session.status === 'active') {
+        sessionStatusScreen.style.display = 'none';
+        activeSessionContent.style.display = 'block';
+        const rightBar = document.querySelector('.top-bar-right');
+        if (rightBar) rightBar.style.display = 'flex';
+        updateQuotaStatus();
+    } else if (session.status === 'upcoming') {
+        showSessionStatus('upcoming', session.title, `La session "${session.title}" n'a pas encore commencé.`, session.dateStart, session.timeStart, session.dateEnd, session.timeEnd);
+    } else {
+        showSessionStatus('ended', session.title, `La session "${session.title}" est terminée.`, session.dateStart, session.timeStart, session.dateEnd, session.timeEnd);
+    }
+}
+
+function showAuthScreen() {
+    activeSessionContent.style.display = 'none';
+    sessionStatusScreen.style.display = 'none';
+    if (sessionAuthScreen) sessionAuthScreen.style.display = 'flex';
+    const rightBar = document.querySelector('.top-bar-right');
+    if (rightBar) rightBar.style.display = 'none';
+}
+
+if (sessionAuthForm) {
+    sessionAuthForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const pwd = sessionPasswordInput.value.trim();
+        if (!pwd) return;
+
+        sessionAuthBtn.disabled = true;
+        sessionAuthBtn.style.opacity = '0.7';
+        if (sessionAuthError) sessionAuthError.style.display = 'none';
+
+        const ok = await verifyPassword(pwd);
+        
+        sessionAuthBtn.disabled = false;
+        sessionAuthBtn.style.opacity = '1';
+
+        if (ok) {
+            sessionStorage.setItem(`suggestify_pwd_${SESSION_SLUG}`, pwd);
+            processSessionStatus(currentSession);
+        } else {
+            if (sessionAuthError) sessionAuthError.style.display = 'block';
+        }
+    });
+}
+
+async function verifyPassword(pwd) {
+    try {
+        const res = await fetch(`${API_BASE}/api/public?slug=${SESSION_SLUG}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'verifyPassword', password: pwd })
+        });
+        const data = await res.json();
+        return data.success;
+    } catch {
+        return false;
+    }
+}
+
+function showSessionStatus(type, title, message, dateStart, timeStart, dateEnd, timeEnd) {
     activeSessionContent.style.display = 'none';
     sessionStatusScreen.style.display = 'flex';
-    document.querySelector('.top-bar-right').style.display = 'none';
+    const rightBar = document.querySelector('.top-bar-right');
+    if (rightBar) rightBar.style.display = 'none';
 
     const icon = document.getElementById('sessionStatusIcon');
     const titleEl = document.getElementById('sessionStatusTitle');
@@ -179,12 +241,12 @@ function showSessionStatus(type, title, message, dateStart, dateEnd) {
     titleEl.textContent = title;
     msgEl.textContent = message;
 
-    const formatDate = (d) => {
-        const date = new Date(d + 'T00:00:00');
-        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const formatDT = (d, t) => {
+        const date = new Date(`${d}T${t || '00:00'}:00`);
+        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) + ' à ' + (t || '00:00');
     };
 
-    datesEl.innerHTML = `<i class="fa-regular fa-calendar"></i> ${formatDate(dateStart)} — ${formatDate(dateEnd)}`;
+    datesEl.innerHTML = `<i class="fa-regular fa-calendar"></i> ${formatDT(dateStart, timeStart)} — ${formatDT(dateEnd, timeEnd)}`;
 }
 
 function showSessionError(title, message) {
@@ -315,6 +377,9 @@ async function suggestTrack(btnElement) {
     }
 
     const trackData = JSON.parse(btnElement.dataset.track);
+    const savedPwd = sessionStorage.getItem(`suggestify_pwd_${SESSION_SLUG}`);
+    if (savedPwd) trackData.password = savedPwd;
+
     const originalHTML = btnElement.innerHTML;
     btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
     btnElement.classList.add('loading');
