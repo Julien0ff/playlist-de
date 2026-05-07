@@ -31,7 +31,7 @@ const adminToastMsg = document.getElementById('adminToastMsg');
 async function tryAutoLogin() {
     if (!TOKEN) return showLogin();
     try {
-        const res = await fetch(`${API}/api/admin/sessions`, { headers: authHeaders() });
+        const res = await fetch(`${API}/api/sessions`, { headers: authHeaders() });
         if (res.ok) return showDashboard();
     } catch {}
     TOKEN = null;
@@ -46,7 +46,7 @@ loginForm.addEventListener('submit', async (e) => {
     loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
     try {
-        const res = await fetch(`${API}/api/admin/login`, {
+        const res = await fetch(`${API}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: loginPassword.value })
@@ -113,7 +113,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 async function loadSessions() {
     try {
-        const res = await fetch(`${API}/api/admin/sessions`, { headers: authHeaders() });
+        const res = await fetch(`${API}/api/sessions`, { headers: authHeaders() });
         const data = await res.json();
         if (!data.success) return;
         sessions = data.sessions;
@@ -194,13 +194,13 @@ modalConfirm.addEventListener('click', async () => {
 
     try {
         if (editingSessionId) {
-            await fetch(`${API}/api/admin/sessions/${editingSessionId}`, {
+            await fetch(`${API}/api/sessions/${editingSessionId}`, {
                 method: 'PUT', headers: authHeaders(),
                 body: JSON.stringify({ title, dateStart, dateEnd })
             });
             toast('Session modifiée !');
         } else {
-            const res = await fetch(`${API}/api/admin/sessions`, {
+            const res = await fetch(`${API}/api/sessions`, {
                 method: 'POST', headers: authHeaders(),
                 body: JSON.stringify({ title, dateStart, dateEnd })
             });
@@ -221,7 +221,7 @@ async function deleteSession(id) {
     if (!confirm(`Supprimer la session "${s?.title}" et toutes ses suggestions ?`)) return;
 
     try {
-        await fetch(`${API}/api/admin/sessions/${id}`, { method: 'DELETE', headers: authHeaders() });
+        await fetch(`${API}/api/sessions/${id}`, { method: 'DELETE', headers: authHeaders() });
         toast('Session supprimée.');
         loadSessions();
     } catch (err) {
@@ -250,7 +250,7 @@ sessionSelect.addEventListener('change', () => {
 
 async function loadSuggestions(sessionId) {
     try {
-        const res = await fetch(`${API}/api/admin/sessions/${sessionId}/suggestions`, { headers: authHeaders() });
+        const res = await fetch(`${API}/api/suggestions/list?sessionId=${sessionId}`, { headers: authHeaders() });
         const data = await res.json();
         if (!data.success) return;
         renderSuggestions(data.suggestions);
@@ -334,7 +334,11 @@ function renderGroup(title, items, type) {
 
 async function acceptSuggestion(id) {
     try {
-        await fetch(`${API}/api/admin/suggestions/${id}/accept`, { method: 'PUT', headers: authHeaders() });
+        await fetch(`${API}/api/suggestions/status`, { 
+            method: 'PUT', 
+            headers: authHeaders(),
+            body: JSON.stringify({ id, action: 'accept' })
+        });
         toast('Suggestion acceptée !');
         loadSuggestions(sessionSelect.value);
         loadSessions(); // refresh count
@@ -349,7 +353,11 @@ async function rejectSuggestion(id, btnEl) {
     }
 
     try {
-        await fetch(`${API}/api/admin/suggestions/${id}/reject`, { method: 'PUT', headers: authHeaders() });
+        await fetch(`${API}/api/suggestions/status`, { 
+            method: 'PUT', 
+            headers: authHeaders(),
+            body: JSON.stringify({ id, action: 'reject' })
+        });
         toast('Suggestion refusée.');
         loadSuggestions(sessionSelect.value);
         loadSessions();
@@ -358,7 +366,11 @@ async function rejectSuggestion(id, btnEl) {
 
 async function markDone(id) {
     try {
-        await fetch(`${API}/api/admin/suggestions/${id}/done`, { method: 'PUT', headers: authHeaders() });
+        await fetch(`${API}/api/suggestions/status`, { 
+            method: 'PUT', 
+            headers: authHeaders(),
+            body: JSON.stringify({ id, action: 'done' })
+        });
         toast('Marquée comme ajoutée !');
         loadSuggestions(sessionSelect.value);
     } catch (err) { console.error(err); }

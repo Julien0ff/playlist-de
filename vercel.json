@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/session/:slug", "destination": "/index.html" }
+  ],
+  "redirects": [
+    { "source": "/", "destination": "/admin", "permanent": false }
+  ]
+}
