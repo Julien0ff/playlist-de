@@ -46,7 +46,7 @@ loginForm.addEventListener('submit', async (e) => {
     loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
     try {
-        const res = await fetch(`${API}/api/auth/login`, {
+        const res = await fetch(`${API}/api/auth`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: loginPassword.value })
@@ -194,7 +194,7 @@ modalConfirm.addEventListener('click', async () => {
 
     try {
         if (editingSessionId) {
-            await fetch(`${API}/api/sessions/${editingSessionId}`, {
+            await fetch(`${API}/api/sessions?id=${editingSessionId}`, {
                 method: 'PUT', headers: authHeaders(),
                 body: JSON.stringify({ title, dateStart, dateEnd })
             });
@@ -221,7 +221,7 @@ async function deleteSession(id) {
     if (!confirm(`Supprimer la session "${s?.title}" et toutes ses suggestions ?`)) return;
 
     try {
-        await fetch(`${API}/api/sessions/${id}`, { method: 'DELETE', headers: authHeaders() });
+        await fetch(`${API}/api/sessions?id=${id}`, { method: 'DELETE', headers: authHeaders() });
         toast('Session supprimée.');
         loadSessions();
     } catch (err) {
@@ -250,7 +250,7 @@ sessionSelect.addEventListener('change', () => {
 
 async function loadSuggestions(sessionId) {
     try {
-        const res = await fetch(`${API}/api/suggestions/list?sessionId=${sessionId}`, { headers: authHeaders() });
+        const res = await fetch(`${API}/api/suggestions?sessionId=${sessionId}`, { headers: authHeaders() });
         const data = await res.json();
         if (!data.success) return;
         renderSuggestions(data.suggestions);
@@ -334,7 +334,7 @@ function renderGroup(title, items, type) {
 
 async function acceptSuggestion(id) {
     try {
-        await fetch(`${API}/api/suggestions/status`, { 
+        await fetch(`${API}/api/suggestions`, { 
             method: 'PUT', 
             headers: authHeaders(),
             body: JSON.stringify({ id, action: 'accept' })
@@ -353,7 +353,7 @@ async function rejectSuggestion(id, btnEl) {
     }
 
     try {
-        await fetch(`${API}/api/suggestions/status`, { 
+        await fetch(`${API}/api/suggestions`, { 
             method: 'PUT', 
             headers: authHeaders(),
             body: JSON.stringify({ id, action: 'reject' })
@@ -366,7 +366,7 @@ async function rejectSuggestion(id, btnEl) {
 
 async function markDone(id) {
     try {
-        await fetch(`${API}/api/suggestions/status`, { 
+        await fetch(`${API}/api/suggestions`, { 
             method: 'PUT', 
             headers: authHeaders(),
             body: JSON.stringify({ id, action: 'done' })

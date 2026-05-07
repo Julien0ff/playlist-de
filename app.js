@@ -118,7 +118,7 @@ async function loadSession() {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/api/public/session?slug=${SESSION_SLUG}`);
+        const res = await fetch(`${API_BASE}/api/public?slug=${SESSION_SLUG}`);
         const data = await res.json();
 
         if (!res.ok || !data.success) {
@@ -321,7 +321,7 @@ async function suggestTrack(btnElement) {
     btnElement.disabled = true;
 
     try {
-        const response = await fetch(`${API_BASE}/api/public/suggest?slug=${SESSION_SLUG}`, {
+        const response = await fetch(`${API_BASE}/api/public?slug=${SESSION_SLUG}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(trackData)
