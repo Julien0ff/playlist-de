@@ -583,6 +583,12 @@ body {
     opacity: 0.7;
 }
 
+.add-btn.duplicate {
+    background: var(--warning-soft);
+    color: var(--warning);
+    pointer-events: none;
+}
+
 /* ── Toast ────────────────────────────────────────── */
 .toast {
     position: fixed;
@@ -723,3 +729,104 @@ body {
         padding: 0 12px;
     }
 }
+
+/* ── Session Status Screen ────────────────────────── */
+.session-status-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 32px;
+    gap: 20px;
+    min-height: 60vh;
+    animation: fadeUp 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.session-status-icon {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 40px;
+    margin-bottom: 8px;
+    animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.session-status-icon.upcoming {
+    background: rgba(255, 159, 10, 0.12);
+    color: var(--warning);
+    box-shadow: 0 0 40px rgba(255, 159, 10, 0.15);
+}
+
+.session-status-icon.ended {
+    background: var(--fill-search);
+    color: var(--text-tertiary);
+    box-shadow: 0 0 40px rgba(118, 118, 128, 0.1);
+}
+
+.session-status-icon.error {
+    background: rgba(255, 69, 58, 0.12);
+    color: var(--danger);
+    box-shadow: 0 0 40px rgba(255, 69, 58, 0.15);
+}
+
+@keyframes pulseGlow {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.session-status-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+}
+
+.session-status-msg {
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+.session-status-dates {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--fill-search);
+    border-radius: 980px;
+    padding: 8px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.session-status-dates i {
+    font-size: 13px;
+    color: var(--accent);
+}
+
+@media (max-width: 500px) {
+    .session-status-screen {
+        padding: 60px 20px;
+    }
+
+    .session-status-icon {
+        width: 80px;
+        height: 80px;
+        font-size: 32px;
+    }
+
+    .session-status-title {
+        font-size: 1.4rem;
+    }
+
+    .session-status-msg {
+        font-size: 0.95rem;
+    }
+}
+

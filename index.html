@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Suggestify — Proposez vos musiques</title>
-    <meta name="description" content="Recherchez et proposez des morceaux pour notre playlist collaborative Spotify.">
-    <link rel="stylesheet" href="styles.css">
+    <meta name="description" content="Recherchez et proposez des morceaux pour notre playlist collaborative.">
+    <link rel="stylesheet" href="/styles.css">
     <link
         href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap"
         rel="stylesheet">
@@ -24,7 +24,7 @@
     <nav class="top-bar">
         <div class="top-bar-left">
             <i class="fa-solid fa-plane-departure"></i>
-            <span>Voyage Allemagne 2026</span>
+            <span id="sessionLabel">Chargement…</span>
         </div>
         <div class="top-bar-right" id="quotaStatus">
             <!-- Filled by JS -->
@@ -32,45 +32,58 @@
     </nav>
 
     <main class="app-shell">
-        <!-- Header -->
-        <header class="app-header" id="appHeader">
-            <div class="header-content">
-                <div class="brand">
-                    <img src="assets/Apple_Music_icon.png" alt="Suggestify" class="brand-icon">
-                    <h1>Suggestify</h1>
-                </div>
-                <p class="tagline">Propose un son pour la playlist collaborative.</p>
+        <!-- Session Status Screen (shown when session is not active) -->
+        <div class="session-status-screen" id="sessionStatusScreen" style="display: none;">
+            <div class="session-status-icon" id="sessionStatusIcon">
+                <i class="fa-solid fa-clock"></i>
             </div>
-        </header>
-
-        <!-- Search -->
-        <section class="search-wrapper" id="searchSection">
-            <div class="search-bar" id="searchBar">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="searchInput" placeholder="Artiste, titre, album…" autocomplete="off"
-                    spellcheck="false">
-                <div class="search-spinner" id="searchLoader"></div>
-                <button class="search-clear" id="clearBtn" aria-label="Effacer la recherche">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-        </section>
-
-        <!-- Rate limit banner (hidden by default) -->
-        <div class="rate-limit-banner" id="rateLimitBanner">
-            <i class="fa-solid fa-clock"></i>
-            <span id="rateLimitMsg">Tu as atteint la limite. Réessaie dans quelques minutes.</span>
+            <h2 class="session-status-title" id="sessionStatusTitle"></h2>
+            <p class="session-status-msg" id="sessionStatusMsg"></p>
+            <div class="session-status-dates" id="sessionStatusDates"></div>
         </div>
 
-        <!-- Results -->
-        <section class="results-list" id="resultsContainer">
-            <div class="empty-state" id="emptyState">
-                <div class="empty-icon-wrap">
-                    <i class="fa-solid fa-headphones"></i>
+        <!-- Active Session Content -->
+        <div id="activeSessionContent">
+            <!-- Header -->
+            <header class="app-header" id="appHeader">
+                <div class="header-content">
+                    <div class="brand">
+                        <img src="/assets/Apple_Music_icon.png" alt="Suggestify" class="brand-icon">
+                        <h1>Suggestify</h1>
+                    </div>
+                    <p class="tagline">Propose un son pour la playlist collaborative.</p>
                 </div>
-                <p>Recherche un titre pour commencer</p>
+            </header>
+
+            <!-- Search -->
+            <section class="search-wrapper" id="searchSection">
+                <div class="search-bar" id="searchBar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" placeholder="Artiste, titre, album…" autocomplete="off"
+                        spellcheck="false">
+                    <div class="search-spinner" id="searchLoader"></div>
+                    <button class="search-clear" id="clearBtn" aria-label="Effacer la recherche">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Rate limit banner (hidden by default) -->
+            <div class="rate-limit-banner" id="rateLimitBanner">
+                <i class="fa-solid fa-clock"></i>
+                <span id="rateLimitMsg">Tu as atteint la limite. Réessaie dans quelques minutes.</span>
             </div>
-        </section>
+
+            <!-- Results -->
+            <section class="results-list" id="resultsContainer">
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon-wrap">
+                        <i class="fa-solid fa-headphones"></i>
+                    </div>
+                    <p>Recherche un titre pour commencer</p>
+                </div>
+            </section>
+        </div>
     </main>
 
     <!-- Footer -->
@@ -83,10 +96,10 @@
         <div class="toast-icon">
             <i class="fa-solid fa-check"></i>
         </div>
-        <span>Ajouté à la playlist !</span>
+        <span>Suggestion envoyée !</span>
     </div>
 
-    <script src="app.js"></script>
+    <script src="/app.js"></script>
 </body>
 
 </html>

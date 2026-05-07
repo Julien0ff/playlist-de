@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suggestify — Admin</title>
+    <link rel="stylesheet" href="/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="ambient-bg">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <div class="login-icon"><i class="fa-solid fa-lock"></i></div>
+            <h1>Suggestify Admin</h1>
+            <p>Entre le mot de passe pour accéder au dashboard.</p>
+            <form id="loginForm" autocomplete="off">
+                <div class="login-field">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="loginPassword" placeholder="Mot de passe" autofocus>
+                </div>
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Connexion
+                </button>
+            </form>
+            <div class="login-error" id="loginError">Mot de passe incorrect.</div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard" id="dashboard" style="display:none;">
+        <header class="dash-header">
+            <div class="dash-brand">
+                <img src="/assets/Apple_Music_icon.png" alt="Suggestify">
+                <div>
+                    <h1>Suggestify <span>Admin</span></h1>
+                </div>
+            </div>
+            <button class="logout-btn" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</button>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="sessions"><i class="fa-solid fa-calendar-days"></i> Sessions</button>
+            <button class="tab-btn" data-tab="suggestions"><i class="fa-solid fa-music"></i> Suggestions</button>
+        </div>
+
+        <!-- SESSIONS TAB -->
+        <div class="tab-content active" id="tab-sessions">
+            <div class="section-header">
+                <h2>Sessions</h2>
+                <button class="btn-primary" id="newSessionBtn"><i class="fa-solid fa-plus"></i> Nouvelle session</button>
+            </div>
+            <div class="sessions-grid" id="sessionsGrid"></div>
+        </div>
+
+        <!-- SUGGESTIONS TAB -->
+        <div class="tab-content" id="tab-suggestions">
+            <div class="session-selector">
+                <label for="sessionSelect"><i class="fa-solid fa-filter"></i> Session :</label>
+                <select id="sessionSelect"><option value="">— Sélectionner —</option></select>
+            </div>
+            <div id="suggestionsContent"></div>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modal">
+            <h2 id="modalTitle">Nouvelle session</h2>
+            <div class="modal-field">
+                <label for="modalSessionTitle">Titre de la session</label>
+                <input type="text" id="modalSessionTitle" placeholder="Ex: Voyage Allemagne 2027">
+            </div>
+            <div class="modal-field">
+                <label for="modalDateStart">Date de début</label>
+                <input type="date" id="modalDateStart">
+            </div>
+            <div class="modal-field">
+                <label for="modalDateEnd">Date de fin</label>
+                <input type="date" id="modalDateEnd">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-cancel" id="modalCancel">Annuler</button>
+                <button class="modal-confirm" id="modalConfirm">Créer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="admin-toast" id="adminToast">
+        <div class="admin-toast-icon"><i class="fa-solid fa-check"></i></div>
+        <span id="adminToastMsg">Action effectuée !</span>
+    </div>
+
+    <script src="/admin.js"></script>
+</body>
+</html>
