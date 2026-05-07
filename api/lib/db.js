@@ -1,13 +1,16 @@
-const { kv } = require('@vercel/kv');
+const Redis = require('ioredis');
+
+// Utilise REDIS_URL ou KV_URL (pour être compatible avec les deux)
+const redis = new Redis(process.env.REDIS_URL || process.env.KV_URL);
 
 // ── Sessions ─────────────────────────────────────────
 
 async function getSessions() {
     try {
-        const sessions = await kv.get('sessions');
-        return sessions || [];
+        const raw = await redis.get('sessions');
+        return raw ? JSON.parse(raw) : [];
     } catch (err) {
-        console.error('❌ Erreur lecture sessions KV:', err.message);
+        console.error('❌ Erreur lecture sessions Redis:', err.message);
         return [];
     }
 }
@@ -34,7 +37,7 @@ async function createSession({ title, slug, dateStart, dateEnd }) {
         createdAt: new Date().toISOString()
     };
     sessions.push(session);
-    await kv.set('sessions', sessions);
+    await redis.set('sessions', JSON.stringify(sessions));
     return session;
 }
 
@@ -43,7 +46,7 @@ async function updateSession(id, updates) {
     const idx = sessions.findIndex(s => s.id === id);
     if (idx === -1) return null;
     sessions[idx] = { ...sessions[idx], ...updates };
-    await kv.set('sessions', sessions);
+    await redis.set('sessions', JSON.stringify(sessions));
     return sessions[idx];
 }
 
@@ -51,12 +54,12 @@ async function deleteSession(id) {
     let sessions = await getSessions();
     const before = sessions.length;
     sessions = sessions.filter(s => s.id !== id);
-    await kv.set('sessions', sessions);
+    await redis.set('sessions', JSON.stringify(sessions));
 
     // Also delete suggestions linked to this session
     let suggestions = await getSuggestions();
     suggestions = suggestions.filter(s => s.sessionId !== id);
-    await kv.set('suggestions', suggestions);
+    await redis.set('suggestions', JSON.stringify(suggestions));
 
     return sessions.length < before;
 }
@@ -65,10 +68,10 @@ async function deleteSession(id) {
 
 async function getSuggestions() {
     try {
-        const suggestions = await kv.get('suggestions');
-        return suggestions || [];
+        const raw = await redis.get('suggestions');
+        return raw ? JSON.parse(raw) : [];
     } catch (err) {
-        console.error('❌ Erreur lecture suggestions KV:', err.message);
+        console.error('❌ Erreur lecture suggestions Redis:', err.message);
         return [];
     }
 }
@@ -93,7 +96,7 @@ async function createSuggestion({ sessionId, trackName, artistName, albumName, a
         createdAt: new Date().toISOString()
     };
     suggestions.push(suggestion);
-    await kv.set('suggestions', suggestions);
+    await redis.set('suggestions', JSON.stringify(suggestions));
     return suggestion;
 }
 
@@ -103,21 +106,31 @@ async function updateSuggestionStatus(id, status) {
     if (idx === -1) return null;
     suggestions[idx].status = status;
     suggestions[idx].updatedAt = new Date().toISOString();
-    await kv.set('suggestions', suggestions);
+    await redis.set('suggestions', JSON.stringify(suggestions));
     return suggestions[idx];
 }
 
 async function deleteSuggestion(id) {
     let suggestions = await getSuggestions();
     suggestions = suggestions.filter(s => s.id !== id);
-    await kv.set('suggestions', suggestions);
+    await redis.set('suggestions', JSON.stringify(suggestions));
+}
+
+// ── Rate Limiting Helper (utilisé par public/suggest.js) ──
+
+async function getRateLimit(key) {
+    const raw = await redis.get(key);
+    return raw ? JSON.parse(raw) : null;
+}
+
+async function setRateLimit(key, value, expireMs) {
+    await redis.set(key, JSON.stringify(value), 'PX', expireMs);
 }
 
 // ── Session Status Helper ────────────────────────────
 
 function getSessionStatus(session) {
     const now = new Date();
-    // On force l'heure pour éviter les décalages de fuseau horaire
     const start = new Date(session.dateStart + 'T00:00:00');
     const end = new Date(session.dateEnd + 'T23:59:59');
 
@@ -138,5 +151,7 @@ module.exports = {
     createSuggestion,
     updateSuggestionStatus,
     deleteSuggestion,
+    getRateLimit,
+    setRateLimit,
     getSessionStatus
 };

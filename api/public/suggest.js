@@ -1,6 +1,5 @@
 const db = require('../lib/db');
-const { validateSuggestion } = require('../lib/filter'); // Need to ensure filter exists in lib or similar
-const { kv } = require('@vercel/kv');
+const { validateSuggestion } = require('../lib/filter');
 
 const RATE_LIMIT_MAX = 2;
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
@@ -14,7 +13,7 @@ function getRealIp(req) {
 async function checkRateLimit(ip) {
     const key = `rate_limit:${ip}`;
     const now = Date.now();
-    let timestamps = await kv.get(key) || [];
+    let timestamps = await db.getRateLimit(key) || [];
     
     // Filter old timestamps
     timestamps = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW_MS);
@@ -27,7 +26,7 @@ async function checkRateLimit(ip) {
     }
 
     timestamps.push(now);
-    await kv.set(key, timestamps, { px: RATE_LIMIT_WINDOW_MS }); // Auto expire
+    await db.setRateLimit(key, timestamps, RATE_LIMIT_WINDOW_MS);
     return { allowed: true, remainingMin: 0 };
 }
 
